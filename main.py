@@ -56,6 +56,13 @@ def create_computer(
 ):
     return crud.create_computer(db=db, item=item, id=find_new_id(db))
 
+@app.post("/update")
+def update_computer(
+    item: schemas.Computer, db: Session = Depends(get_db)
+):
+    crud.update_computer(db=db, id=item.id)
+    return {'messgae': 'updated'}
+
 
 
 

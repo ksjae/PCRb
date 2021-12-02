@@ -47,3 +47,7 @@ def create_computer(db: Session, item: schemas.ComputerCreate, id: int):
 def refresh_avail(db):
     basetime = datetime.datetime.now() - datetime.timedelta(minutes=TIME_UNTIL_DELETE)
     db.query(models.Computer).filter(models.Computer.last_active < basetime).update({models.Computer.used: False})
+
+def update_computer(db, id: int):
+    db.query(models.Computer).filter(models.Computer.id == id).update({models.Computer.last_active: datetime.datetime.now()})
+    refresh_avail(db)
