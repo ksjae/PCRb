@@ -18,4 +18,5 @@ class Computer(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     type = Column(String, unique=False, index=True)
+    used = Column(Boolean, default=True)
     last_active = Column(DateTime)

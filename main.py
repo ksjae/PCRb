@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 import crud, models, schemas
 from database import SessionLocal, engine
 
+AVAILABLE_COMPUTERS = 10
+MAX_COMPUTERS = 10000
+
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -32,25 +35,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-computer_list = []
-max_id=10
-
-def find_new_id(id_list: list):
-    for i in range(len(id_list)+5): # I doubt my abilities
+def find_new_id(db):
+    id_list = [i.id for i in crud.get_computer(db, skip=0, limit=MAX_COMPUTERS)]
+    for i in range(len(id_list)):
         if i not in id_list:
             return i
+    return len(id_list)+1
+
+def get_used_computers(db):
+    crud.refresh_avail(db)
+    return [c.id for c in crud.get_computer(db, skip=0, limit=MAX_COMPUTERS) if c.used]
 
 @app.get("/")
-async def root():
-    return {"message": max_id - len(computer_list)}
+async def root(db: Session = Depends(get_db)):
+    return {"message": AVAILABLE_COMPUTERS - len(get_used_computers(db))}
 
-@app.post("/")
-async def add_computer(id: Optional[int] = None):
-    if not id:
-        id = find_new_id(computer_list)
-        computer_list.append(id)
-        return {"message": id}
-    return {"message": "refreshed"}
+@app.post("/", response_model=schemas.Computer)
+def create_computer(
+    item: schemas.ComputerCreate, db: Session = Depends(get_db)
+):
+    return crud.create_computer(db=db, item=item, id=find_new_id(db))
 
 
 
@@ -68,7 +72,7 @@ def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 def create_computer(
     item: schemas.ComputerCreate, db: Session = Depends(get_db)
 ):
-    return crud.create_computer(db=db, item=item)
+    return crud.create_computer(db=db, item=item, id=find_new_id(db))
 
 
 

@@ -6,14 +6,14 @@ from sqlalchemy.sql.sqltypes import DateTime
 
 class ComputerBase(BaseModel):
     type: str
-
+    used: bool
 
 class ComputerCreate(ComputerBase):
-    id: int
     last_active: datetime.datetime
 
 
 class Computer(ComputerBase):
+    id: int
     class Config:
         orm_mode = True
 

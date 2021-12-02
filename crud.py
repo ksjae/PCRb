@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
-import hashlib, os
+import hashlib, os, datetime
 
 import models, schemas
+
+TIME_UNTIL_DELETE = 10 # 10 min.
 
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
@@ -35,9 +37,13 @@ def get_computer(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Computer).offset(skip).limit(limit).all()
 
 
-def create_computer(db: Session, item: schemas.ComputerCreate):
-    db_item = models.Computer(**item.dict())
+def create_computer(db: Session, item: schemas.ComputerCreate, id: int):
+    db_item = models.Computer(**item.dict(), id=id)
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
     return db_item
+
+def refresh_avail(db):
+    basetime = datetime.datetime.now() - datetime.timedelta(minutes=TIME_UNTIL_DELETE)
+    db.query(models.Computer).filter(models.Computer.last_active < basetime).update({models.Computer.used: False})
